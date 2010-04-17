@@ -1,0 +1,18 @@
+This is a simple IP mapping plugin for dokuwiki. I hold no warrenty nor liability for this software.
+
+By memory this will doup to 9 bits of differnce.
+
+I use this in it's own namespace, and liks are created automagically for my purposes. They might not suit you. This is more or less a hack than a plugin. I am lazy.
+
+<ipmap network address/network cidr/subnet cidr>
+
+Usage example
+<ipmap 172.28.1.0/24/30>
+  * 172.28.1.0/30 - Modem to RB Router \\ Michael Wheeler
+  * 172.28.1.4/30 - RB Router to Cisco 3550  \\ Michael Wheeler
+  * 172.28.1.8/30 - Test RB Router to Cisco 3550 \\ Michael Wheeler \\ IpSec IPIP
+  * 172.28.1.12/30 - Test RB Router to Cisco 3550 \\ Michael Wheeler \\ IPIP
+  * 172.28.1.16/30 - [[:sites:Card:main|Card]] to [[:sites:Sayre:main|Sayre]] \\ Michael Wheeler
+  * 172.28.1.248/29 - /32's for announcements
+  * 172.28.1.20/30 - Lime to Iron
+</ipmap> 
