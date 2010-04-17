@@ -1,0 +1,7 @@
+base   ipmap
+author Michael Wheeler
+email  doku@michael-wheeler.org
+date   2010-04-10
+name   ipmap plugin
+desc   Displays Subnets in Tables
+url    http://michael-wheeler.org
