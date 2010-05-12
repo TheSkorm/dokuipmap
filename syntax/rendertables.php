@@ -99,6 +99,8 @@ $subnet = $subnet[0];
         for($z = 0; $z < ($width); ++$z) {
             $endrow .= "^";
         }
+$first = 1;
+/* Are we the first cell in a row - dodgy.  */
         $output = "^  [[..:main|UP]]  " . $endrow."\n";
         for($i = 0; $i < ($width*$height); ++$i) {
               if (($dip + $i * ($dright + 1) > $lasts + $drights ) or ($lasts + $drights == 0)) {
@@ -114,18 +116,33 @@ $subnet = $subnet[0];
                    $drights = bindec($rightbs);
                    $sout = $mask; 
                    $lasts = $dip + $i * ($dright + 1); 
-                   $lastsb =  $ipout;    
+                   $lastsb =  $ipout;
               }  else {
                    $sout = "$subnet";
-              }     
-              } 
-              if ($desc){
-              $output .= "^  [[.:$ipout\_$sout:main|$ipout/$sout]]  \\\\  " . "$desc" . "    ";
-              } else {
-              $output .= "|  $ipout". "/$sout  \\\\  " . "$desc" . "    ";
               }
+              }     
+                  
+              
+               
+              if ($desc){
+                  if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1)){
+                  $output .= "^  [[.:$ipout\_$sout:main|$ipout/$sout]]  \\\\  " . "$desc" . "    ";
+                  $first = 0;
+                  } else {
+                          $output .= "|";
+                  }
+                  } else {
+                    if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1)){
+                   $output .= "|  $ipout/$sout    ";
+                   $first = 0;
+                   } else {
+                           $output .= "|";
+                   }
+ 
+                  }
               if (($i + 1)% $width == 0){
-                   $output .= "   |\n";    
+                   $output .= "|\n";    
+                   $first = 1;
               }
         }
         return($output);
