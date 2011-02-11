@@ -35,6 +35,8 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 
 	function handle($match, $state, $pos, &$handler)
 	{
+		//This function should eventually do all the parsing of the incoming data, to save time (it can be cached).
+		
 		switch($state)
 		{
 		case DOKU_LEXER_ENTER:
@@ -52,59 +54,81 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		}
 	}
 	
-	function render($mode, &$renderer, $data) {
-    global $in;
-        if($mode == 'xhtml'){
-            list($state,$match) = $data;
-            switch ($state) {
-              case DOKU_LEXER_ENTER : 
-                list($ip, $net, $subnet,$data) = $match;     
-                $renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
-                break;
-              case DOKU_LEXER_UNMATCHED :   break;
-              case DOKU_LEXER_EXIT :        break;
-            }
-            return true;
-        }
-        return false;
-    }
-    function _maketables($ip, $net, $subnet, $data){
- $subnet = explode(">",$subnet);
-$subnet = $subnet[0];
-        $x = array(
-        9 => 8,
-        8 => 8,
-        7 => 8,
-        6 => 8,
-        5 => 8,
-        4 => 4,
-        3 => 4,
-        2 => 2
-        );
-        $y = array(
-        9 => 64,
-        8 => 32,
-        7 => 16,
-        6 => 8,
-        5 => 4,
-        4 => 4,
-        3 => 2,
-        2 => 2
-        );
-        $subnetsr=array();
-        $subnets = explode("*",$data);
-        foreach ($subnets as &$value) {
-        $subnetu = explode("-",$value);
-        $subneta = explode("/",trim($subnetu[0]));
-        $subnetsr[$subneta[0]] = array("Mask" => $subneta[1], "Desc" => trim($subnetu[1]));
-        }
+	function render($mode, &$renderer, $data)
+	{
+		global $in;
+		
+		//Choose the output mode. XHTML is the most common.
+		switch($mode)
+		{
+		case "xhtml":
+			list($state,$match) = $data;
+			switch($state)
+			{
+			case DOKU_LEXER_ENTER: 
+				list($ip, $net, $subnet,$data) = $match;     
+				$renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
+				break;
 
+			case DOKU_LEXER_UNMATCHED:
+				break;
 
-        $diff =  $subnet - $net;
-        $rightbits = 32 - $subnet;
-        for($z = 0; $z < ($rightbits); ++$z) {
-            $rightb .= "1";
-        }
+			case DOKU_LEXER_EXIT:
+				break;
+			}
+			return true;
+		
+		default:	//Currently all other modes are unsupported by both DokuIPMap and DokuWiki.
+			return false;
+		}
+	}
+	
+	function _maketables($ip, $net, $subnet, $data)
+	{
+		$subnet = explode(">",$subnet);
+		$subnet = $subnet[0];
+		
+		$x = array(
+			9 => 8,
+			8 => 8,
+			7 => 8,
+			6 => 8,
+			5 => 8,
+			4 => 4,
+			3 => 4,
+			2 => 2
+		);
+		
+		$y = array(
+			9 => 64,
+			8 => 32,
+			7 => 16,
+			6 => 8,
+			5 => 4,
+			4 => 4,
+			3 => 2,
+			2 => 2
+		);
+		
+		$subnetsr = array();
+		$subnets = explode("*",$data);
+
+		//For each of the subnets in the network, extract information.
+		foreach($subnets as &$value)
+		{
+			$subnetu = explode("-",$value);
+			$subneta = explode("/",trim($subnetu[0]));
+			$subnetsr[$subneta[0]] = array("Mask" => $subneta[1], "Desc" => trim($subnetu[1]));
+		}
+
+		$diff =  $subnet - $net;
+		$rightbits = 32 - $subnet;
+
+		for($z = 0; $z < ($rightbits); ++$z)
+		{
+			$rightb .= "1";
+		}
+		
         $dright = bindec($rightb);
         $width=$x[$diff];
         $height=$y[$diff];
@@ -162,3 +186,4 @@ $first = 1;
     }
 }
 // vim:ts=4:sw=4:et:enc=utf-8:
+?>
