@@ -14,32 +14,45 @@ if (!defined('DOKU_TAB')) define('DOKU_TAB', "\t");
 if (!defined('DOKU_PLUGIN')) define('DOKU_PLUGIN',DOKU_INC.'lib/plugins/');
 require_once DOKU_PLUGIN.'syntax.php';
 
-class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin {
-    function getType(){ return 'formatting'; }
-    function getAllowedTypes() { return array('formatting','container', 'substition', 'disabled'); }   
-    function getSort(){ return 158; }
+class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
+{
+	//Definitions of the type of plugin we are, etc.
+	function getType()		{ return 'formatting'; }
+	function getAllowedTypes()	{ return array('formatting','container', 'substition', 'disabled'); }   
+	function getSort()		{ return 158; }
 
-    function connectTo($mode) {
-      //  $this->Lexer->addSpecialPattern('<ipmap>',$mode,'plugin_ipmap_rendertables');
-      /*  $this->Lexer->addEntryPattern('<ipmap.*?>(?=.*?</ipmap>)',$mode,'plugin_ipmap_rendertables'); */
-        $this->Lexer->addEntryPattern('<ipmap.*>.*',$mode,'plugin_ipmap_rendertables');
-    }
+	function connectTo($mode)
+	{
+/*		$this->Lexer->addSpecialPattern('<ipmap>',$mode,'plugin_ipmap_rendertables'); */
+/*		$this->Lexer->addEntryPattern('<ipmap.*?>(?=.*?</ipmap>)',$mode,'plugin_ipmap_rendertables'); */
+		$this->Lexer->addEntryPattern('<ipmap.*>.*',$mode,'plugin_ipmap_rendertables');
+	}
 
-    function postConnect() {
-        $this->Lexer->addExitPattern('</ipmap>','plugin_ipmap_rendertables');
-    }
+	function postConnect()
+	{
+		$this->Lexer->addExitPattern('</ipmap>','plugin_ipmap_rendertables');
+	}
 
-    function handle($match, $state, $pos, &$handler){
-        switch ($state) {
-          case DOKU_LEXER_ENTER :
-                 list($ip, $net,$subnet) = preg_split("/\//u", substr($match, 7, -1), 3);
-                 return array($state, array($ip, $net, $subnet,strip_tags($match)));
-          case DOKU_LEXER_UNMATCHED :  return array($state, $match);
-          case DOKU_LEXER_EXIT :       return array($state, '');
-        }
-        return array();
-    }
-    function render($mode, &$renderer, $data) {
+	function handle($match, $state, $pos, &$handler)
+	{
+		switch($state)
+		{
+		case DOKU_LEXER_ENTER:
+			list($ip, $net,$subnet) = preg_split("/\//u", substr($match, 7, -1), 3);
+			return array($state, array($ip, $net, $subnet,strip_tags($match)));
+		
+		case DOKU_LEXER_UNMATCHED:
+			return array($state, $match);
+		
+		case DOKU_LEXER_EXIT:
+			return array($state, '');
+		
+		default:
+			return array();
+		}
+	}
+	
+	function render($mode, &$renderer, $data) {
     global $in;
         if($mode == 'xhtml'){
             list($state,$match) = $data;
