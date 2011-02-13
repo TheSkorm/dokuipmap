@@ -49,7 +49,11 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		case DOKU_LEXER_EXIT:
 			return array($state, '');
 		
-		default:
+		case DOKU_LEXER_MATCHED:
+		case DOKU_LEVER_SPECIAL:
+			return array();
+		
+		default:	//This is basically in case of an error. All valid states should be handled above.
 			return array();
 		}
 	}
@@ -129,61 +133,73 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			$rightb .= "1";
 		}
 		
-        $dright = bindec($rightb);
-        $width=$x[$diff];
-        $height=$y[$diff];
-        $dip = ip2long($ip);
-        for($z = 0; $z < ($width); ++$z) {
-            $endrow .= "^";
-        }
-$first = 1;
-/* Are we the first cell in a row - dodgy.  */
-        $output = "^  [[..:main|UP]]  " . $endrow."\n";
-        for($i = 0; $i < ($width*$height); ++$i) {
-              if (($dip + $i * ($dright + 1) > $lasts + $drights ) or ($lasts + $drights == 0)) {
-              $ipout = long2ip($dip + $i * ($dright + 1));
-              $desc = $subnetsr[$ipout]['Desc'];
-              $mask = $subnetsr[$ipout]['Mask'];
-              if ($mask){
-                   $rightbs = "";
-                   $rightbitss = 32 - $mask;
-                   for($z = 0; $z < ($rightbitss); ++$z) {
-                        $rightbs .= "1";
-                   }
-                   $drights = bindec($rightbs);
-                   $sout = $mask; 
-                   $lasts = $dip + $i * ($dright + 1); 
-                   $lastsb =  $ipout;
-              }  else {
-                   $sout = "$subnet";
-              }
-              }     
-                  
-              
-               
-              if ($desc){
-                  if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1)){
-                  $output .= "^  [[.:$ipout\_$sout:main|$ipout/$sout]]  \\\\  " . "$desc" . "    ";
-                  $first = 0;
-                  } else {
-                          $output .= "|";
-                  }
-                  } else {
-                    if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1)){
-                   $output .= "|  $ipout/$sout    ";
-                   $first = 0;
-                   } else {
-                           $output .= "|";
-                   }
- 
-                  }
-              if (($i + 1)% $width == 0){
-                   $output .= "|\n";    
-                   $first = 1;
-              }
-        }
-        return($output);
-    }
+		$dright = bindec($rightb);
+		$width=$x[$diff];
+		$height=$y[$diff];
+		$dip = ip2long($ip);
+		
+		for($z = 0; $z < ($width); ++$z)
+		{
+			$endrow .= "^";
+		}
+		
+		$first = 1;
+		/* Are we the first cell in a row - dodgy.  */
+		$output = "^  [[..:main|UP]]  " . $endrow."\n";
+		for($i = 0; $i < ($width*$height); ++$i)
+		{
+			if (($dip + $i * ($dright + 1) > $lasts + $drights ) or ($lasts + $drights == 0))
+			{
+				$ipout = long2ip($dip + $i * ($dright + 1));
+				$desc = $subnetsr[$ipout]['Desc'];
+				$mask = $subnetsr[$ipout]['Mask'];
+				
+				if ($mask)
+				{
+					$rightbs = "";
+					$rightbitss = 32 - $mask;
+					
+					for($z = 0; $z < ($rightbitss); ++$z)
+					{
+						$rightbs .= "1";
+					}
+                   
+					$drights = bindec($rightbs);
+					$sout = $mask; 
+					$lasts = $dip + $i * ($dright + 1); 
+					$lastsb =  $ipout;
+				}  else {
+					$sout = "$subnet";
+				}
+			}     
+		
+			if ($desc)
+			{
+				if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1))
+				{
+					$output .= "^  [[.:$ipout\_$sout:main|$ipout/$sout]]  \\\\  " . "$desc" . "    ";
+					$first = 0;
+				} else {
+					$output .= "|";
+				}
+			} else {
+				if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1))
+				{
+					$output .= "|  $ipout/$sout    ";
+					$first = 0;
+				} else {
+					$output .= "|";
+				}
+			}
+		
+			if (($i + 1)% $width == 0)
+			{
+				$output .= "|\n";    
+				$first = 1;
+			}
+		}
+        
+		return($output);
+	}
 }
-// vim:ts=4:sw=4:et:enc=utf-8:
 ?>
