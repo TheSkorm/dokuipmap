@@ -18,7 +18,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 {
 	//Definitions of the type of plugin we are, etc.
 	function getType()		{ return 'formatting'; }
-	function getAllowedTypes()	{ return array('formatting','container', 'substition', 'disabled'); }   
+	function getAllowedTypes()	{ return array('formatting','container', 'substition', 'disabled');
 	function getSort()		{ return 158; }
 
 	function connectTo($mode)
@@ -45,13 +45,13 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			list($ip, $net,$subnet) = preg_split("/\//u", substr($match, 7, -1), 3);
 			return array($state, array($ip, $net, $subnet,strip_tags($match)));
 		
-		case DOKU_LEXER_UNMATCHED:
+		case DOKU_LEXER_MATCHED:
 			return array($state, $match);
 		
 		case DOKU_LEXER_EXIT:
 			return array($state, '');
 		
-		case DOKU_LEXER_MATCHED:
+		case DOKU_LEXER_UNMATCHED:
 		case DOKU_LEVER_SPECIAL:
 			return array();
 		
@@ -80,6 +80,9 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			case DOKU_LEXER_EXIT:
 				break;
 			}
+			return(true);
+
+		case "metadata":	//There is also a metadata output mode. It does nothing, so we do nothing.
 			return(true);
 		
 		default:	//Currently all other modes are unsupported by both DokuIPMap and DokuWiki.
@@ -164,16 +167,16 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 					{
 						$rightbs .= "1";
 					}
-                   
+                   			
 					$drights = bindec($rightbs);
-					$sout = $mask; 
-					$lasts = $dip + $i * ($dright + 1); 
+					$sout = $mask;
+					$lasts = $dip + $i * ($dright + 1);
 					$lastsb =  $ipout;
 				}  else {
 					$sout = "$subnet";
 				}
-			}     
-		
+			}
+			
 			if ($desc)
 			{
 				if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1))
@@ -192,15 +195,25 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 					$output .= "|";
 				}
 			}
-		
+			
 			if (($i + 1)% $width == 0)
 			{
 				$output .= "|\n";    
 				$first = 1;
 			}
 		}
-        
+        	
 		return($output);
+	}
+	
+	/**
+	Calculates the size of the required XHTML table, given the difference in size between the subnets, in bits.
+	@param sizeDifference The difference in size between the network and the subnets, in bits.
+	@return The size of the table as an array, horizontal size (X) then vertical size(Y).
+	*/
+	function calculateTableSize($sizeDifference)
+	{
+		return(array(0,0));
 	}
 	
 	function parseFirstLine($lineData)
