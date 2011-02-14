@@ -18,7 +18,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 {
 	//Definitions of the type of plugin we are, etc.
 	function getType()		{ return 'formatting'; }
-	function getAllowedTypes()	{ return array('formatting','container', 'substition', 'disabled');
+	function getAllowedTypes()	{ return array('formatting','container', 'substition', 'disabled'); }
 	function getSort()		{ return 158; }
 
 	function connectTo($mode)
