@@ -23,13 +23,15 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 
 	function connectTo($mode)
 	{
-/*		$this->Lexer->addSpecialPattern('<ipmap>',$mode,'plugin_ipmap_rendertables'); */
-/*		$this->Lexer->addEntryPattern('<ipmap.*?>(?=.*?</ipmap>)',$mode,'plugin_ipmap_rendertables'); */
 		$this->Lexer->addEntryPattern('<ipmap.*>.*',$mode,'plugin_ipmap_rendertables');
 	}
 
 	function postConnect()
 	{
+		//Add the pattern that matches a data line (" * 0.0.0.0/0 - Description\n").
+		//TODO.
+		
+		//Add the pattern that matches the end of the table ("</ipmap>").
 		$this->Lexer->addExitPattern('</ipmap>','plugin_ipmap_rendertables');
 	}
 
@@ -60,8 +62,6 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 	
 	function render($mode, &$renderer, $data)
 	{
-		global $in;
-		
 		//Choose the output mode. XHTML is the most common.
 		switch($mode)
 		{
@@ -80,10 +80,10 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			case DOKU_LEXER_EXIT:
 				break;
 			}
-			return true;
+			return(true);
 		
 		default:	//Currently all other modes are unsupported by both DokuIPMap and DokuWiki.
-			return false;
+			return(false);
 		}
 	}
 	
@@ -138,6 +138,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		$height=$y[$diff];
 		$dip = ip2long($ip);
 		
+		//Oh dear Michael, what have we done here?
 		for($z = 0; $z < ($width); ++$z)
 		{
 			$endrow .= "^";
@@ -200,6 +201,25 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		}
         
 		return($output);
+	}
+	
+	function parseFirstLine($lineData)
+	{
+		return(0);
+	}
+	
+	/**
+	@param lineData The entire line of data, as input from the raw data.
+	@return An array containing information about the subnet.
+	*/
+	function parseSubnetLine($lineData)
+	{
+		return(0);
+	}
+	
+	function generateTable_XHTML()
+	{
+		return(0);
 	}
 }
 ?>
