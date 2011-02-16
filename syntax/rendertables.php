@@ -100,7 +100,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		case "metadata":	//There is also a metadata output mode. It does nothing, so we do nothing.
 			return(true);
 		
-		default:	//Currently all other modes are unsupported by both DokuIPMap and DokuWiki.
+		default:		//Currently all other modes are unsupported by both DokuIPMap and DokuWiki.
 			return(false);
 		}
 	}
@@ -148,7 +148,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 				break;
 			
 			default:	//If we got here, something has gone terribly wrong.
-				die();
+				die("Something impossible happened in calculateTableSize(). I suggest filing a bug report with Alan Turing.");
 			}
 		}
 		
@@ -192,8 +192,11 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		}
 		
 		$first = 1;
-		/* Are we the first cell in a row - dodgy.  */
-		$output = "^  [[..:main|UP]]  " . $endrow."\n";
+		
+		//Output the first line in the table, which is a link to the namespace above.
+		//We get a link to the appropriate page from the configuration.
+		$output = "^  [[..:".$conf['start']."|UP]]  " . $endrow."\n";
+		
 		for($i = 0; $i < ($width*$height); ++$i)
 		{
 			if (($dip + $i * ($dright + 1) > $lasts + $drights ) or ($lasts + $drights == 0))
