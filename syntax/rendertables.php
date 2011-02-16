@@ -106,55 +106,11 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 	}
 	
 	/**
-	Calculates the size of the required XHTML table, given the difference in size between the subnets, in bits.
-	@param sizeDifference The difference in size between the network and the subnets, in bits.
-	@return The size of the table as an array, horizontal size (X) then vertical size(Y).
+	@param ip The base IP address of the network.
+	@param net The size of the network that IP address is in.
+	@param subnet The size of the subnets that the table should be broken up into.
+	@param data The raw data from the matching process.
 	*/
-	function calculateTableSize($sizeDifference)
-	{
-		$xSize = 0;
-		$ySize = 0;
-		
-		//If the size difference is small, we use a smaller table that doesn't take up the full width of the page.
-		if($sizeDifference>=5)
-		{
-			//Calculate automatically, based on width of 8.
-			$xSize = 8;
-			
-			//We base the vertical length of the table on the number of cells needed divided by the width. Magic!
-			$ySize = (pow(2,$sizeDifference))/$xSize;
-		} else {
-			//Calculate manually.
-			switch($sizeDifference)
-			{
-			case 1:		//A 1x2 table (2 cells, not commonly used in IPv4 due to need for network and broadcast addresses).
-				$xSize = 1;
-				$ySize = 2;
-				break;
-			
-			case 2:		//A 2x2 table (4 cells).
-				$xSize = 2;
-				$ySize = 2;
-				break;
-				
-			case 3:		//A 4x2 table (8 cells).
-				$xSize = 4;
-				$ySize = 2;
-				break;
-				
-			case 4:		//A 4x4 table (16 cells).
-				$xSize = 4;
-				$ySize = 4;
-				break;
-			
-			default:	//If we got here, something has gone terribly wrong.
-				die("Something impossible happened in calculateTableSize(). I suggest filing a bug report with Alan Turing.");
-			}
-		}
-		
-		return(array($xSize,$ySize));
-	}
-	
 	function _maketables($ip, $net, $subnet, $data)
 	{
 		$subnet = explode(">",$subnet);
@@ -170,8 +126,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			$subneta = explode("/",trim($subnetu[0]));
 			$subnetsr[$subneta[0]] = array("Mask" => $subneta[1], "Desc" => trim($subnetu[1]));
 		}
-
-		$diff =  $subnet - $net;
+		
 		$rightbits = 32 - $subnet;
 
 		for($z = 0; $z < ($rightbits); ++$z)
@@ -181,7 +136,9 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		
 		$dright = bindec($rightb);
 		
-		list($width, $height) = $this->calculateTableSize($diff);
+		//Calculate the required size of the table.
+		$sizeDifference = $subnet - $net;
+		list($width, $height) = $this->calculateTableSize($sizeDifference);
 		
 		$dip = ip2long($ip);
 		
@@ -194,7 +151,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		$first = 1;
 		
 		//Output the first line in the table, which is a link to the namespace above.
-		//We get a link to the appropriate page from the configuration.
+		//We get a link to the appropriate page from the configuration: http://www.dokuwiki.org/config:startpage
 		$output = "^  [[..:".$conf['start']."|UP]]  " . $endrow."\n";
 		
 		for($i = 0; $i < ($width*$height); ++$i)
@@ -253,7 +210,55 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		return($output);
 	}
 	
-	
+	/**
+	Calculates the size of the required XHTML table, given the difference in size between the subnets, in bits.
+	@param sizeDifference The difference in size between the network and the subnets, in bits.
+	@return The size of the table as an array, horizontal size (X) then vertical size(Y).
+	*/
+	function calculateTableSize($sizeDifference)
+	{
+		$xSize = 0;
+		$ySize = 0;
+		
+		//If the size difference is small, we use a smaller table that doesn't take up the full width of the page.
+		if($sizeDifference>=5)
+		{
+			//Calculate automatically, based on width of 8.
+			$xSize = 8;
+			
+			//We base the vertical length of the table on the number of cells needed divided by the width. Magic!
+			$ySize = (pow(2,$sizeDifference))/$xSize;
+		} else {
+			//Calculate manually.
+			switch($sizeDifference)
+			{
+			case 1:		//A 1x2 table (2 cells, not commonly used in IPv4 due to need for network and broadcast addresses).
+				$xSize = 1;
+				$ySize = 2;
+				break;
+			
+			case 2:		//A 2x2 table (4 cells).
+				$xSize = 2;
+				$ySize = 2;
+				break;
+				
+			case 3:		//A 4x2 table (8 cells).
+				$xSize = 4;
+				$ySize = 2;
+				break;
+				
+			case 4:		//A 4x4 table (16 cells).
+				$xSize = 4;
+				$ySize = 4;
+				break;
+			
+			default:	//If we got here, something has gone terribly wrong.
+				die("Something impossible happened in calculateTableSize(). I suggest filing a bug report with Alan Turing.");
+			}
+		}
+		
+		return(array($xSize,$ySize));
+	}
 	
 	function parseFirstLine($lineData)
 	{
