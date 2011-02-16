@@ -1,10 +1,25 @@
 <?php
 /**
- * DokuWiki Plugin ipmap (Syntax Component)
- *
- * @license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
- * @author  Michael Wheeler <doku@michael-wheeler.org>
- */
+	DokuWiki Plugin ipmap (Syntax Component)
+
+	@license GPL 2 http://www.gnu.org/licenses/gpl-2.0.html
+	@author  Michael Wheeler <doku@michael-wheeler.org>
+
+	Copyright 2010 Michael Wheeler.
+	
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 2 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
 
 // must be run within Dokuwiki
 if (!defined('DOKU_INC')) die();
@@ -213,7 +228,47 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 	*/
 	function calculateTableSize($sizeDifference)
 	{
-		return(array(0,0));
+		$xSize = 0;
+		$ySize = 0;
+		
+		//If the size difference is small, we use a smaller table that doesn't take up the full width of the page.
+		if($sizeDifference>=5)
+		{
+			//Calculate automatically, based on width of 8.
+			$xSize = 8;
+			
+			//We base the vertical length of the table on the number of cells needed divided by the width. Magic!
+			$ySize = (pow(2,$sizeDifference))/$xSize;
+		} else {
+			//Calculate manually.
+			switch($sizeDifference)
+			{
+			case 1:		//A 1x2 table (2 cells, not commonly used in IPv4 due to need for network and broadcast addresses).
+				$xSize = 1;
+				$ySize = 2;
+				break;
+			
+			case 2:		//A 2x2 table (4 cells).
+				$xSize = 2;
+				$ySize = 2;
+				break;
+				
+			case 3:		//A 4x2 table (8 cells).
+				$xSize = 4;
+				$ySize = 2;
+				break;
+				
+			case 4:		//A 4x4 table (16 cells).
+				$xSize = 4;
+				$ySize = 4;
+				break;
+			
+			default:	//If we got here, something has gone terribly wrong.
+				die();
+			}
+		}
+		
+		return(array($xSize,$ySize));
 	}
 	
 	function parseFirstLine($lineData)
