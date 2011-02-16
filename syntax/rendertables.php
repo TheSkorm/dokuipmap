@@ -52,15 +52,15 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		switch($state)
 		{
 		case DOKU_LEXER_ENTER:
-			list($ip, $net,$subnet) = preg_split("/\//u", substr($match, 7, -1), 3);
-			return array($state, array($ip, $net, $subnet,strip_tags($match)));
-		
-		case DOKU_LEXER_MATCHED:
-			return array($state, $match);
+			$firstLine = strtok($match,"\n");
+			list($baseIP, $networkSize, $subnetSize) = $this->parseFirstLine($firstLine);
+			
+			return array($state, array($baseIP, $networkSize, $subnetSize, strip_tags($match)));
 		
 		case DOKU_LEXER_EXIT:
 			return array($state, '');
 		
+		case DOKU_LEXER_MATCHED:
 		case DOKU_LEXER_UNMATCHED:
 		case DOKU_LEVER_SPECIAL:
 			return array();
@@ -82,9 +82,6 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			case DOKU_LEXER_ENTER: 
 				list($ip, $net, $subnet,$data) = $match;     
 				$renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
-				break;
-
-			case DOKU_LEXER_UNMATCHED:
 				break;
 
 			case DOKU_LEXER_EXIT:
@@ -255,9 +252,21 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		return(array($xSize,$ySize));
 	}
 	
+	/**
+	Parses the "<ipmap 0.0.0.0/X/Y>" line.
+	@param lineData the first line.
+	@return An array containing the relevant data in order of appearance.
+	*/
 	function parseFirstLine($lineData)
 	{
-		return(0);
+		//echo $lineData;
+		
+		list($baseIP, $networkSize, $subnetSize) = preg_split("/\//u", substr($lineData, 7, -1), 3);
+		$subnetSize = strtok($subnetSize,">");
+		
+		//echo $baseIP." ".$networkSize." ".$subnetSize;
+		
+		return(array($baseIP,$networkSize,$subnetSize));
 	}
 	
 	/**
