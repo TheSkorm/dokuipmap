@@ -160,30 +160,6 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		$subnet = explode(">",$subnet);
 		$subnet = $subnet[0];
 		
-		/*
-		$x = array(
-			9 => 8,
-			8 => 8,
-			7 => 8,
-			6 => 8,
-			5 => 8,
-			4 => 4,
-			3 => 4,
-			2 => 2
-		);
-		
-		$y = array(
-			9 => 64,
-			8 => 32,
-			7 => 16,
-			6 => 8,
-			5 => 4,
-			4 => 4,
-			3 => 2,
-			2 => 2
-		);
-		*/
-		
 		$subnetsr = array();
 		$subnets = explode("*",$data);
 
@@ -205,8 +181,6 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		
 		$dright = bindec($rightb);
 		
-		//$width=$x[$diff];
-		//$height=$y[$diff];
 		list($width, $height) = $this->calculateTableSize($diff);
 		
 		$dip = ip2long($ip);
