@@ -38,13 +38,8 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 
 	function connectTo($mode)
 	{
-		$this->Lexer->addEntryPattern('<ipmap.*>.*',$mode,'plugin_ipmap_rendertables');
-	}
-
-	function postConnect()
-	{
-		//Add the pattern that matches a data line (" * 0.0.0.0/0 - Description\n").
-		//TODO.
+		//Add the pattern that matches the entire table, to trigger our plugin.
+		$this->Lexer->addEntryPattern('<ipmap.*>.*</ipmap>',$mode,'plugin_ipmap_rendertables');
 		
 		//Add the pattern that matches the end of the table ("</ipmap>").
 		$this->Lexer->addExitPattern('</ipmap>','plugin_ipmap_rendertables');
