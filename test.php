@@ -1,7 +1,6 @@
 <?php
 /* TODO
  - remove if statement to break - find a solution
- - validate masks are all ones
  - add in code for detecting subnets
  - mask and network validtation could be done via functions and used else where
 */
@@ -43,10 +42,7 @@ function findnetworks($network, $networkmask, $subnetmask){
 	$network = $network & $networkmask; /* make sure the network is infact a network address by xor'ing the network mask */
 	$networkmask = ~ $networkmask ; // invert masks
 	$subnetmask = ~ $subnetmask ;  //invert masks
-	for ( $subnet = $network; $subnet < $network ^ $networkmask ^ $subnetmask ; $subnet += $subnetmask + 1) { 
-		if( $subnet > ($network ^ $networkmask ^ $subnetmask)){
-			break;
-		} 
+	for ( $subnet = $network; $subnet <= ($network ^ $networkmask ^ $subnetmask ); $subnet += $subnetmask + 1) { 
 		printsubnet($subnet);
 	} 
 }
@@ -57,6 +53,5 @@ function printsubnet($subnet){
 }
 
 print findnetworks($network, $networkmask, $subnetmask);
-print findnetworks($network, 32, 32);
 
 ?>
