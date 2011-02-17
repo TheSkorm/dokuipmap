@@ -29,12 +29,19 @@ function printbin($value){
 	printf($format, $value);
 }
 
+
+$KnownNetworks  = array();
+// all network keys should be checked using an XOR of the mask first.
+$KnownNetworks[ip2long("172.16.7.0")] = cidr2mask(24);
+$KnownNetworks[ip2long("172.16.16.0")] = cidr2mask(23);
+print_r($KnownNetworks);
+print_r(array_keys($KnownNetworks));
 /*
 start at the network address,
 stop when the subnet is larger than the network + the networkmask ,
 increment by the subnetmask (+1 to move it into the subnet area)
 */
-function findnetworks($network, $networkmask, $subnetmask){
+function findnetworks($network, $networkmask, $subnetmask, $knownnetworks){
 	if ($networkmask > $subnetmask) return ("CIDR validation failed - Netmask larger than subnetmask\n");
 	$networkmask = cidr2mask($networkmask); // net mask checks and conversion
 	$subnetmask = cidr2mask($subnetmask); //  subnet mask checks and conversion
@@ -43,15 +50,20 @@ function findnetworks($network, $networkmask, $subnetmask){
 	$networkmask = ~ $networkmask ; // invert masks
 	$subnetmask = ~ $subnetmask ;  //invert masks
 	for ( $subnet = $network; $subnet <= ($network ^ $networkmask ^ $subnetmask ); $subnet += $subnetmask + 1) { 
-		printsubnet($subnet);
+		printsubnet($subnet, $knownnetworks);
 	} 
 }
 
-function printsubnet($subnet){
+function printsubnet($subnet,$knownnetworks){
+	if(in_array($subnet, array_keys($knownnetworks))){
+	print "found ya\n";
+	print long2ip($knownnetworks[$subnet]);
+	print "\n";
+	}
 	print long2ip($subnet); /* for now just print out the ip address */
 	print "\n";
 }
 
-print findnetworks($network, $networkmask, $subnetmask);
+print findnetworks($network, $networkmask, $subnetmask,$KnownNetworks);
 
 ?>
