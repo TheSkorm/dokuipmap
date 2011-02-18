@@ -87,9 +87,8 @@ $KnownNetworksTest  = array();
 $KnownNetworksTest[ip2long("172.16.7.0")] = 4294967040;
 $KnownNetworksTest[ip2long("172.16.16.0")] = 4294966784;
 $network = ip2long($ip);
-$networkmask = $net;
-$subnetmask = $subnet;
-				$renderer->doc .= $renderer->render($this->_maketables($this->_findnetworks($network, $networkmask, $subnetmask),$KnownNetworksTest));
+
+				$renderer->doc .= $renderer->render($this->_maketables($this->_findnetworks($network, $net, $subnet),$KnownNetworksTest,$this->calculateTableSize($subnet-$net)));
 				break;
 
 			case DOKU_LEXER_EXIT:
@@ -127,10 +126,11 @@ increment by the subnetmask (+1 to move it into the subnet area)
 	
 	/**
 	*/
-	function _maketables($subnets,$knownnetworks)
+	function _maketables($subnets,$knownnetworks,$tablewidth) 
 	{
 	$output = "";
         $lastmatch = array(0 => 0,1 => 0); //0=ip address, 1=subnetmask
+	$loopwidth = 0; //this is how far the loop has gone
         foreach ($subnets as $subnet){ //run through each subnet
                 if ($lastmatch[0] or $lastmatch[1]){ //Did we spot a known subnet on the last loop?
                         if (($subnet & $lastmatch[1])==$lastmatch[0]){ // check if the subnet fits within the last spotted s$
@@ -146,9 +146,14 @@ increment by the subnetmask (+1 to move it into the subnet area)
 
                                 $lastmatch[1] = $knownnetworks[$subnet];
                         } else {                                                //not known subnet
-                                $output .=  long2ip($subnet) . "\n";
+                                $output .=  "|  " . long2ip($subnet) . "   |";
                         }
                 }
+		$loopwidth++;	
+		if ($loopwidth > $tablewidth[0]-1){
+			$output .= "\n";
+			$loopwidth = 0;
+		}
         }
 		return $output;
 	}
