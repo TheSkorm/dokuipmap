@@ -81,7 +81,15 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			{
 			case DOKU_LEXER_ENTER: 
 				list($ip, $net, $subnet,$data) = $match;     
-				$renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
+//				$renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
+$KnownNetworksTest  = array();
+// all network keys should be checked using an XOR of the mask first.
+$KnownNetworksTest[ip2long("172.16.7.0")] = 4294967040;
+$KnownNetworksTest[ip2long("172.16.16.0")] = 4294966784;
+$network = ip2long("172.16.0.0");
+$networkmask = 16;
+$subnetmask = 24;
+				$renderer->doc .= $renderer->render($this->_maketables($this->_findnetworks($network, $networkmask, $subnetmask),$KnownNetworksTest));
 				break;
 
 			case DOKU_LEXER_EXIT:
@@ -96,112 +104,57 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			return(false);
 		}
 	}
-	
-	/**
-	@param ip The base IP address of the network.
-	@param net The size of the network that IP address is in.
-	@param subnet The size of the subnets that the table should be broken up into.
-	@param data The raw data from the matching process.
-	*/
-	function _maketables($ip, $net, $subnet, $data)
-	{
-		$subnet = explode(">",$subnet);
-		$subnet = $subnet[0];
-		
-		$subnetsr = array();
-		$subnets = explode("*",$data);
+/*
+start at the network address,
+stop when the subnet is larger than the network + the networkmask ,
+increment by the subnetmask (+1 to move it into the subnet area)
+*/
 
-		//For each of the subnets in the network, extract information.
-		foreach($subnets as &$value)
-		{
-			$subnetu = explode("-",$value);
-			$subneta = explode("/",trim($subnetu[0]));
-			$subnetsr[$subneta[0]] = array("Mask" => $subneta[1], "Desc" => trim($subnetu[1]));
-		}
-		
-		$rightbits = 32 - $subnet;
-
-		for($z = 0; $z < ($rightbits); ++$z)
-		{
-			$rightb .= "1";
-		}
-		
-		$dright = bindec($rightb);
-		
-		//Calculate the required size of the table.
-		$sizeDifference = $subnet - $net;
-		list($width, $height) = $this->calculateTableSize($sizeDifference);
-		
-		$dip = ip2long($ip);
-		
-		//Oh dear Michael, what have we done here?
-		for($z = 0; $z < ($width); ++$z)
-		{
-			$endrow .= "^";
-		}
-		
-		$first = 1;
-		
-		//Output the first line in the table, which is a link to the namespace above.
-		//We get a link to the appropriate page from the configuration: http://www.dokuwiki.org/config:startpage
-		$output = "^  [[..:".$conf['start']."|UP]]  " . $endrow."\n";
-		
-		for($i = 0; $i < ($width*$height); ++$i)
-		{
-			if (($dip + $i * ($dright + 1) > $lasts + $drights ) or ($lasts + $drights == 0))
-			{
-				$ipout = long2ip($dip + $i * ($dright + 1));
-				$desc = $subnetsr[$ipout]['Desc'];
-				$mask = $subnetsr[$ipout]['Mask'];
-				
-				if ($mask)
-				{
-					$rightbs = "";
-					$rightbitss = 32 - $mask;
-					
-					for($z = 0; $z < ($rightbitss); ++$z)
-					{
-						$rightbs .= "1";
-					}
-                   			
-					$drights = bindec($rightbs);
-					$sout = $mask;
-					$lasts = $dip + $i * ($dright + 1);
-					$lastsb =  $ipout;
-				}  else {
-					$sout = "$subnet";
-				}
-			}
-			
-			if ($desc)
-			{
-				if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1))
-				{
-					$output .= "^  [[.:$ipout\_$sout:main|$ipout/$sout]]  \\\\  " . "$desc" . "    ";
-					$first = 0;
-				} else {
-					$output .= "|";
-				}
-			} else {
-				if ((long2ip($dip + $i * ($dright + 1)) == $ipout) or ($first == 1))
-				{
-					$output .= "|  $ipout/$sout    ";
-					$first = 0;
-				} else {
-					$output .= "|";
-				}
-			}
-			
-			if (($i + 1)% $width == 0)
-			{
-				$output .= "|\n";    
-				$first = 1;
-			}
-		}
-        	
-		return($output);
+	function _findnetworks($network, $networkmask, $subnetmask){
+        	$subnets = array();
+	        if ($networkmask > $subnetmask) return ("CIDR validation failed - Netmask larger than subnetmask\n");
+	        $networkmask = $this->cidr2mask($networkmask); // net mask checks and conversion
+	        $subnetmask = $this->cidr2mask($subnetmask); //  subnet mask checks and conversion
+	        if (!($networkmask & $subnetmask)) return ("CIDR validation failed - to big or to small\n");
+	        $network = $network & $networkmask; /* make sure the network is infact a network address by xor'ing the network mask */
+	        $networkmask = ~ $networkmask ; // invert masks
+        	$subnetmask = ~ $subnetmask ;  //invert masks
+	        for ( $subnet = $network; $subnet <= ($network ^ $networkmask ^ $subnetmask ); $subnet += $subnetmask + 1) { 
+	                $subnets[] = $subnet;
+	        } 
+        	return $subnets;
 	}
 	
+	/**
+	*/
+	function _maketables($subnets,$knownnetworks)
+	{
+        $lastmatch = array(0 => 0,1 => 0); //0=ip address, 1=subnetmask
+        foreach ($subnets as $subnet){ //run through each subnet
+                if ($lastmatch[0] or $lastmatch[1]){ //Did we spot a known subnet on the last loop?
+                        if (($subnet & $lastmatch[1])==$lastmatch[0]){ // check if the subnet fits within the last spotted s$
+                                print long2ip($lastmatch[0]);
+                                print "* \n";
+                        } else { // if it's not, it means we have gone passed out subnet mask and need to reset
+                                $lastmatch = array(0 => 0,1 => 0);
+                                print long2ip($subnet);
+                                print "\n";
+                        }
+                }  else {
+                        if(in_array($subnet, array_keys($knownnetworks))){  //is the subnet known?
+                                print long2ip($subnet);
+                                print "* \n";
+                                $lastmatch[0] = $subnet;
+                                $lastmatch[1] = $knownnetworks[$subnet];
+                        } else {                                                //not known subnet
+                                print long2ip($subnet);
+                                print "\n";
+
+                        }
+                }
+        }
+
+	}
 	/**
 	Calculates the size of the required XHTML table, given the difference in size between the subnets, in bits.
 	@param sizeDifference The difference in size between the network and the subnets, in bits.
@@ -282,5 +235,18 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 	{
 		return(0);
 	}
+	function cidr2mask($cidr)
+	{
+        	if (($cidr > 0) & ($cidr <= 32)){
+                	$mask = 4294967296 - pow(2, 32-$cidr);
+        	        return $mask;
+        	} else {
+                	return false;
+        	} 
+	}
+
+
+
+
 }
 ?>
