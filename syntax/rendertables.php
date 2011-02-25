@@ -82,13 +82,10 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 			case DOKU_LEXER_ENTER: 
 				list($ip, $net, $subnet,$data) = $match;     
 //				$renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
-$KnownNetworksTest  = array();
-// all network keys should be checked using an XOR of the mask first.
-$KnownNetworksTest[ip2long("172.16.7.0")] = 4294967040;
-$KnownNetworksTest[ip2long("172.16.16.0")] = 4294966784;
 $network = ip2long($ip);
 
-				$renderer->doc .= $renderer->render($this->_maketables($this->_findnetworks($network, $net, $subnet),$KnownNetworksTest,$this->calculateTableSize($subnet-$net)));
+				$renderer->doc .= $renderer->render($this->_maketables($this->_findnetworks($network, $net, $subnet),
+$this->parseSubnetData($data),$this->calculateTableSize($subnet-$net)));
 				break;
 
 			case DOKU_LEXER_EXIT:
@@ -134,24 +131,33 @@ increment by the subnetmask (+1 to move it into the subnet area)
         foreach ($subnets as $subnet){ //run through each subnet
                 if ($lastmatch[0] or $lastmatch[1]){ //Did we spot a known subnet on the last loop?
                         if (($subnet & $lastmatch[1])==$lastmatch[0]){ // check if the subnet fits within the last spotted s$
-                                $output .= "*" . long2ip($lastmatch[0]) . "\n";
+				if ($loopwidth <> 0){ //check to see if we are the first cell in a row so we can repeat the message
+                                	$output .= "|";
+				}else {
+					$output .= "|   " . long2ip($lastmatch[0]) . " \\\\ " . $knownnetworks[$lastmatch[0]][1]."   ";
+				}
                         } else { // if it's not, it means we have gone passed out subnet mask and need to reset
-                                $lastmatch = array(0 => 0,1 => 0);
-                                $output .= long2ip($subnet) . "\n";
+				if(in_array($subnet, array_keys($knownnetworks))){  //is the subnet known?
+                                	$output .= "|   " . long2ip($subnet) . " \\\\ " . $knownnetworks[$subnet][1]."   ";
+	                                $lastmatch[0] = $subnet;
+        	                        $lastmatch[1] = $knownnetworks[$subnet][0];
+				} else { //else we reset everything
+	                                $lastmatch = array(0 => 0,1 => 0);
+        	                        $output .= "|  E" . long2ip($subnet) . "   ";
+				}
                         }
                 }  else {
                         if(in_array($subnet, array_keys($knownnetworks))){  //is the subnet known?
-                                $output .= "*" . long2ip($subnet) . "\n";
+                                $output .= "|   " . long2ip($subnet) . " \\\\ " . $knownnetworks[$subnet][1]."   ";
                                 $lastmatch[0] = $subnet;
-
-                                $lastmatch[1] = $knownnetworks[$subnet];
+                                $lastmatch[1] = $knownnetworks[$subnet][0];
                         } else {                                                //not known subnet
-                                $output .=  "|  " . long2ip($subnet) . "   |";
+                                $output .=  "|   " . long2ip($subnet) ."   ";
                         }
                 }
 		$loopwidth++;	
 		if ($loopwidth > $tablewidth[0]-1){
-			$output .= "\n";
+			$output .= "|\n";
 			$loopwidth = 0;
 		}
         }
@@ -225,12 +231,25 @@ increment by the subnetmask (+1 to move it into the subnet area)
 	}
 	
 	/**
-	@param lineData The entire line of data, as input from the raw data.
-	@return An array containing information about the subnet.
+	@param data Raw data list.
+	@return An array containing information about the subnets.
 	*/
-	function parseSubnetLine($lineData)
+	function parseSubnetData($data)
 	{
-		return(0);
+		$knownsubnets = array ();
+		$lines = explode("\n",$data);
+		foreach ($lines as $line){
+			if ($line){ //remove blank lines
+				list($ipsubnet,$description) = explode("-",$line,2); //172.2.7.2/16  and description
+				$ipsubnet = trim($ipsubnet," *"); //clean up the ip address ( remove the * )
+				list($ip, $cidr) = explode ("/",$ipsubnet);
+				$knownsubnets[ ip2long($ip) & $this->cidr2mask($cidr) ] = array($this->cidr2mask($cidr),$description); //and'd to ensure correct network
+
+
+			}
+		}
+
+		return($knownsubnets);
 	}
 	
 	function generateTable_XHTML()
