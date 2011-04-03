@@ -125,34 +125,53 @@ increment by the subnetmask (+1 to move it into the subnet area)
 	*/
 	function _maketables($subnets,$knownnetworks,$tablewidth) 
 	{
-	$output = "";
+	$output = "^  [[..:main|UP]]  "; 
+/* Hi Jack,
+
+I'm sorry for making a mess of the code below. I'm sure you can fix it up with some case statements or something.
+*/
+				// This is to create the header row
+	for ($i = 1; $i <= $tablewidth[0]; $i++) {
+		$output .= "^";
+	}
+	$output .= "\n";
         $lastmatch = array(0 => 0,1 => 0); //0=ip address, 1=subnetmask
 	$loopwidth = 0; //this is how far the loop has gone
         foreach ($subnets as $subnet){ //run through each subnet
                 if ($lastmatch[0] or $lastmatch[1]){ //Did we spot a known subnet on the last loop?
                         if (($subnet & $lastmatch[1])==$lastmatch[0]){ // check if the subnet fits within the last spotted s$
 				if ($loopwidth <> 0){ //check to see if we are the first cell in a row so we can repeat the message
-                                	$output .= "|";
+                                	$output .= "^"; //merge this cell
 				}else {
-					$output .= "|   " . long2ip($lastmatch[0]) . " \\\\ " . $knownnetworks[$lastmatch[0]][1]."   ";
+					$output .= $this->generateLink(long2ip($lastmatch[0]), //ip
+								$knownnetworks[$lastmatch[0]][0], //mask
+								$knownnetworks[$lastmatch[0]][1]); //desc
+	//				$output .= "^   [[" . long2ip($lastmatch[0])."/".$this->mask2cidr($knownnetworks[$lastmatch[0]][0]) . "]] \\\\ " . $knownnetworks[$lastmatch[0]][1]."   ";
 				}
                         } else { // if it's not, it means we have gone passed out subnet mask and need to reset
 				if(in_array($subnet, array_keys($knownnetworks))){  //is the subnet known?
-                                	$output .= "|   " . long2ip($subnet) . " \\\\ " . $knownnetworks[$subnet][1]."   ";
+					$output .= $this->generateLink(long2ip($subnet),
+								$knownnetworks[$subnet][0],
+								$knownnetworks[$subnet][1]);
+
+//                                	$output .= "^   " . long2ip($subnet) ."/".$this->mask2cidr($knownnetworks[$subnet][0]) . " \\\\ " . $knownnetworks[$subnet][1]."   ";
 	                                $lastmatch[0] = $subnet;
         	                        $lastmatch[1] = $knownnetworks[$subnet][0];
 				} else { //else we reset everything
 	                                $lastmatch = array(0 => 0,1 => 0);
-        	                        $output .= "|  E" . long2ip($subnet) . "   ";
+        	                        $output .= "|  " . long2ip($subnet) . "   ";
 				}
                         }
                 }  else {
                         if(in_array($subnet, array_keys($knownnetworks))){  //is the subnet known?
-                                $output .= "|   " . long2ip($subnet) . " \\\\ " . $knownnetworks[$subnet][1]."   ";
+                                        $output .= $this->generateLink(long2ip($subnet), //ip
+                                                                $knownnetworks[$subnet][0], //mask
+                                                                $knownnetworks[$subnet][1]); //desc
+  //                              $output .= "^   [[".long2ip($subnet)."|" . long2ip($subnet)."/".$this->mask2cidr($knownnetworks[$subnet][0]) . "]] \\\\ " . $knownnetworks[$subnet][1]."   ";
                                 $lastmatch[0] = $subnet;
                                 $lastmatch[1] = $knownnetworks[$subnet][0];
                         } else {                                                //not known subnet
-                                $output .=  "|   " . long2ip($subnet) ."   ";
+                            $output .=  "|   " . long2ip($subnet) ."   "; //just print the IP
                         }
                 }
 		$loopwidth++;	
@@ -251,7 +270,10 @@ increment by the subnetmask (+1 to move it into the subnet area)
 
 		return($knownsubnets);
 	}
-	
+	function generateLink($ip,$subnetmask,$descrption){
+		$cidr = $this->mask2cidr($subnetmask);
+		return("^  [[.:$ip\_$cidr/main|$ip/$cidr]]  \\\\ $descrption  ");
+	}	
 	function generateTable_XHTML()
 	{
 		return(0);
@@ -265,8 +287,10 @@ increment by the subnetmask (+1 to move it into the subnet area)
                 	return false;
         	} 
 	}
-
-
+	function mask2cidr($mask){
+		$cidr = (32 * log(2)-log(4294967296-$mask))/(log(2));
+		return($cidr);
+	}
 
 
 }
