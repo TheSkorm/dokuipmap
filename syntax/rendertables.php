@@ -45,7 +45,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		$this->Lexer->addExitPattern('</ipmap>','plugin_ipmap_rendertables');
 	}
 
-	function handle($match, $state, $pos, &$handler)
+	function handle($match, $state, $pos, Doku_Handler $handler)
 	{
 		//This function should eventually do all the parsing of the incoming data, to save time (it can be cached).
 		
@@ -70,7 +70,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin
 		}
 	}
 	
-	function render($mode, &$renderer, $data)
+	function render($mode, Doku_Renderer $renderer, $data)
 	{
 		//Choose the output mode. XHTML is the most common.
 		switch($mode)
