@@ -29,7 +29,7 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin {
         $this->Lexer->addExitPattern('</ipmap>','plugin_ipmap_rendertables');
     }
 
-    function handle($match, $state, $pos, &$handler){
+    function handle($match, $state, $pos, Doku_Handler $handler){
         switch ($state) {
           case DOKU_LEXER_ENTER :
                  list($ip, $net,$subnet) = preg_split("/\//u", substr($match, 7, -1), 3);
@@ -39,14 +39,15 @@ class syntax_plugin_ipmap_rendertables extends DokuWiki_Syntax_Plugin {
         }
         return array();
     }
-    function render($mode, &$renderer, $data) {
+    function render($mode, Doku_Renderer $renderer, $data) {
     global $in;
         if($mode == 'xhtml'){
             list($state,$match) = $data;
             switch ($state) {
               case DOKU_LEXER_ENTER : 
                 list($ip, $net, $subnet,$data) = $match;     
-                $renderer->doc .= $renderer->render($this->_maketables($ip, $net, $subnet, $data)); 
+                $unused = array();
+                $renderer->doc .= p_render('xhtml',p_get_instructions($this->_maketables($ip, $net, $subnet, $data)), $unused); 
                 break;
               case DOKU_LEXER_UNMATCHED :   break;
               case DOKU_LEXER_EXIT :        break;
